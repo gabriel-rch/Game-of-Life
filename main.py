@@ -1,11 +1,11 @@
 import pygame
 
 from life import Grid
-from life import GLIDER
-from life import LWSS
 
 from GUI import ImageButton
 from GUI import PatternSlider
+
+from rle import Decoder
 
 # Game settings
 CELLS_W = 150
@@ -41,8 +41,11 @@ def main():
     slider_ships = PatternSlider(
         (CELLS_W * CELL_SIZE) + 100, 100, 50)
 
-    slider_ships.add_pattern(GLIDER)
-    slider_ships.add_pattern(LWSS)
+    glider = Decoder('patterns/glider.rle').decode()
+    slider_ships.add_pattern(glider)
+
+    lwss = Decoder('patterns/lwss.rle').decode()
+    slider_ships.add_pattern(lwss)
 
     # Initialize pygame
     pygame.init()

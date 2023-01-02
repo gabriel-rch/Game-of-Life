@@ -128,18 +128,3 @@ class Pattern:
 
     def at(self, x, y):
         return self.layout[x][y]
-
-
-GLIDER = Pattern('Glider',
-                 [[0, 1, 0],
-                  [0, 0, 1],
-                  [1, 1, 1]])
-
-LWSS = Pattern('Lightweight Spaceship',
-               [[0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 1, 0, 0],
-                [0, 1, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0],
-                [1, 0, 0, 0, 0, 0, 1],
-                [1, 1, 1, 1, 1, 1, 0],
-                [0, 0, 0, 0, 0, 0, 0]])

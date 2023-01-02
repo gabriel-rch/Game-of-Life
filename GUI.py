@@ -100,6 +100,7 @@ class PatternSlider (VisualElement):
         self.index = (self.index - 1) % len(self.patterns)
 
     def draw(self, screen):
+        # TODO: fix drawing not matching the actual placed cells
         '''
         Draw the slider on the screen.
         '''
