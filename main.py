@@ -1,4 +1,5 @@
 import pygame
+import os
 
 from life import Grid
 
@@ -41,11 +42,9 @@ def main():
     slider_ships = PatternSlider(
         (CELLS_W * CELL_SIZE) + 100, 100, 50)
 
-    glider = Decoder('patterns/glider.rle').decode()
-    slider_ships.add_pattern(glider)
-
-    lwss = Decoder('patterns/lwss.rle').decode()
-    slider_ships.add_pattern(lwss)
+    for file in os.listdir('patterns'):
+        pattern = Decoder('patterns/' + file).decode()
+        slider_ships.add_pattern(pattern)
 
     # Initialize pygame
     pygame.init()
