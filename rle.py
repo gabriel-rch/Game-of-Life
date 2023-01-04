@@ -102,3 +102,14 @@ class Decoder:
         
         # return the pattern
         return Pattern(self.pattern_name, cells)
+
+
+class Encoder:
+    '''Encodes a Pattern object into a Run Length Encoded (RLE) file'''
+
+    def __init__(self, pattern):
+        self.pattern = pattern
+
+    def encode(self, filename):
+        '''Encodes the Pattern object into a file'''
+        # TODO: encode the pattern into a file

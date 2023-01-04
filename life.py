@@ -106,8 +106,8 @@ class Grid:
     def insert_pattern(self, pattern, x, y):
         for i in range(pattern.size):
             for j in range(pattern.size):
-                self.cells[x + i][y + j].alive = pattern.at(i, j)
-                self.cells[x + i][y + j].next_status = pattern.at(i, j)
+                self.cells[x + j][y + i].alive = pattern.at(i, j)
+                self.cells[x + j][y + i].next_status = pattern.at(i, j)
 
     def revive_cell(self, x, y):
         self.cells[x][y].alive = True
