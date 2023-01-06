@@ -10,6 +10,7 @@
 #   Each line is a series of runs of cells, where a run is a number followed by a cell.
 #   If the number is omitted, it is assumed to be 1.
 #   Each cell is either 'o' or 'b', where 'o' represents a live cell and 'b' represents a dead cell.
+#   The end of the data is denoted by a '!' character.
 
 from life import Pattern
 import re

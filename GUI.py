@@ -99,15 +99,9 @@ class PatternSlider (VisualElement):
         '''
         self.index = (self.index - 1) % len(self.patterns)
 
-    def draw(self, screen):
-        # TODO: fix drawing not matching the actual placed cells
-        '''
-        Draw the slider on the screen.
-        '''
+    def draw_layout(self, x, y, screen):
         current_pattern = self.patterns[self.index]
         cell_size = self.size // current_pattern.size
-
-        x, y = self.x, self.y
 
         for rows in current_pattern.layout:
             for cell in rows:
@@ -119,6 +113,13 @@ class PatternSlider (VisualElement):
                 x += cell_size
             x = self.x
             y += cell_size
+
+    def draw(self, screen):
+        '''
+        Draw the slider on the screen.
+        '''
+        
+        self.draw_layout(self.x, self.y, screen)
 
         self.next_button.x = self.x + self.size - self.size // 4
         self.prev_button.x = self.x

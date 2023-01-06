@@ -20,23 +20,25 @@ def main():
     cells = Grid(CELL_SIZE, CELLS_W, CELLS_H)
 
     # load the images
-    play_icon = pygame.image.load('assets/play-bttn.png')
-    pause_icon = pygame.image.load('assets/pause-bttn.png')
-    reload_icon = pygame.image.load('assets/reload-bttn.png')
-    clear_icon = pygame.image.load('assets/clear-bttn.png')
+    icons = {
+        'play': pygame.image.load('assets/play-bttn.png'),
+        'pause': pygame.image.load('assets/pause-bttn.png'),
+        'reload': pygame.image.load('assets/reload-bttn.png'),
+        'clear': pygame.image.load('assets/clear-bttn.png')
+    }
 
     # Setup the buttons
     bttn_pause = ImageButton(
         (CELLS_W * CELL_SIZE // 2) - 100, (CELLS_H * CELL_SIZE) + 50, 50)
-    bttn_pause.set_image(pause_icon)
+    bttn_pause.set_image(icons['pause'])
 
     bttn_reload = ImageButton(
         (CELLS_W * CELL_SIZE // 2) - 25, (CELLS_H * CELL_SIZE) + 50, 50)
-    bttn_reload.set_image(reload_icon)
+    bttn_reload.set_image(icons['reload'])
 
     bttn_clear = ImageButton(
         (CELLS_W * CELL_SIZE // 2) + 50, (CELLS_H * CELL_SIZE) + 50, 50)
-    bttn_clear.set_image(clear_icon)
+    bttn_clear.set_image(icons['clear'])
 
     # Setup the pattern slider
     slider_ships = PatternSlider(
@@ -83,7 +85,7 @@ def main():
                 # If mouse clicked pause button
                 if bttn_pause.get_rect().collidepoint(event.pos):
                     paused = not paused
-                    bttn_pause.set_image(play_icon if paused else pause_icon)
+                    bttn_pause.set_image(icons['play'] if paused else icons['pause'])
                     continue
 
                 # If mouse clicked clear button
@@ -113,9 +115,11 @@ def main():
             # Check if the mouse is released
             if event.type == pygame.MOUSEBUTTONUP:
                 if pattern:
+                    # TODO: fix out of bounds pattern insertion
                     x, y = pygame.mouse.get_pos()
-                    x = x // CELL_SIZE
-                    y = y // CELL_SIZE
+                    
+                    x = (x - (pattern.size * CELL_SIZE)) // CELL_SIZE
+                    y = (y - (pattern.size * CELL_SIZE)) // CELL_SIZE
 
                     cells.insert_pattern(pattern, x, y)
                     pattern = None
@@ -150,6 +154,13 @@ def main():
             if (slider_ships.x < (CELLS_W * CELL_SIZE) + 100):
                 slider_ships.x = slider_ships.x + (
                     BTTN_SLIDE_SPEED * dt)
+
+        # Draw the held pattern
+        if pattern:
+            x, y = pygame.mouse.get_pos()
+            x = x - (pattern.size * CELL_SIZE)
+            y = y - (pattern.size * CELL_SIZE)
+            pattern.draw(screen, x, y, CELL_SIZE)
 
         # Draw the buttons
         bttn_reload.draw(screen)

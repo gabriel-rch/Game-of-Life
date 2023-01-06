@@ -128,3 +128,14 @@ class Pattern:
 
     def at(self, x, y):
         return self.layout[x][y]
+    
+    def draw(self, screen, x, y, size):
+        # TODO: fix out of bounds cell color
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.at(i, j):
+                    pygame.draw.rect(
+                        screen,
+                        (((x + j) // size) % 255, ((y + i) // size) % 255, 100),
+                        (x + j * size, y + i * size, size, size))
+
