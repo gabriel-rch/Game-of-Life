@@ -92,10 +92,12 @@ class Grid:
                    and 0 <= y + j < len(self.cells[0]):
                     cell.neighbors.append(self.cells[x + i][y + j])
 
-    def calculate_neighbors(self):
-        for row in self.cells:
-            for cell in row:
-                cell.calculate_neighbors()
+    def calculate_neighbors(self, current_thread = 0, total_threads = 1):
+        start = current_thread * ((len(self.cells) ** 2) // total_threads)
+        stop = (current_thread + 1) * ((len(self.cells) ** 2) // total_threads)
+ 
+        for i in range(start, stop):
+            self.cells[i // len(self.cells)][i % len(self.cells)].calculate_neighbors()
 
     def evolve(self, surface):
         for row in self.cells:

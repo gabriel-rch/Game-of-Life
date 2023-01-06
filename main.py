@@ -8,12 +8,14 @@ from GUI import PatternSlider
 
 from rle import Decoder
 
+from threading import Thread
+
 # Game settings
 CELLS_W = 150
 CELLS_H = 150
 CELL_SIZE = 6
 BTTN_SLIDE_SPEED = 0.2
-
+THREADS_COUNT = 2
 
 def main():
     # Setup the grid
@@ -63,6 +65,8 @@ def main():
 
     pattern = None
     paused = False
+
+    threads = []
 
     # Main loop
     while True:
@@ -127,8 +131,16 @@ def main():
         screen.fill((0, 0, 0))
 
         if not paused:
+            for i in range(THREADS_COUNT):
+                thread = Thread(target=cells.calculate_neighbors, args=(i, THREADS_COUNT))
+                thread.start()
+                threads.append(thread)
+            
+            for thread in threads:
+                thread.join()
+
             # Calculate the neighbors
-            cells.calculate_neighbors()
+            #cells.calculate_neighbors()
 
         # Update and draw the cells
         cells.evolve(screen)
