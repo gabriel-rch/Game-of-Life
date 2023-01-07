@@ -26,7 +26,7 @@ class Cell:
         self.y = y
 
         self.size = size
-        self.color = (x, y, 100)
+        self.color = (x % 255, y % 255, 100)
 
         self.alive = alive
         self.next_status = alive

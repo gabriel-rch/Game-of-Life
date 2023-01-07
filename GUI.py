@@ -27,11 +27,15 @@ class ImageButton (VisualElement):
     '''
     A basic button with an image.
     '''
-    def __init__(self, x, y, size):
+    def __init__(self, x, y, size, image=None):
         super().__init__(x, y, size)
 
         self.rect = None
-        self.image = None
+        
+        if image:
+            self.set_image(image)
+        else:
+            self.image = None
 
     def set_image(self, image):
         '''

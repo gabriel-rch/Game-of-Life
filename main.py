@@ -30,17 +30,19 @@ def main():
     }
 
     # Setup the buttons
-    bttn_pause = ImageButton(
-        (CELLS_W * CELL_SIZE // 2) - 100, (CELLS_H * CELL_SIZE) + 50, 50)
-    bttn_pause.set_image(icons['pause'])
-
-    bttn_reload = ImageButton(
-        (CELLS_W * CELL_SIZE // 2) - 25, (CELLS_H * CELL_SIZE) + 50, 50)
-    bttn_reload.set_image(icons['reload'])
-
-    bttn_clear = ImageButton(
-        (CELLS_W * CELL_SIZE // 2) + 50, (CELLS_H * CELL_SIZE) + 50, 50)
-    bttn_clear.set_image(icons['clear'])
+    buttons = {        
+        'pause': ImageButton(
+            (CELLS_W * CELL_SIZE // 2) - 100, (CELLS_H * CELL_SIZE) + 50, 50, 
+            icons['pause']),
+        
+        'reload': ImageButton(
+            (CELLS_W * CELL_SIZE // 2) - 25, (CELLS_H * CELL_SIZE) + 50, 50, 
+            icons['reload']),
+        
+        'clear': ImageButton(
+            (CELLS_W * CELL_SIZE // 2) + 50, (CELLS_H * CELL_SIZE) + 50, 50, 
+            icons['clear'])
+    }
 
     # Setup the pattern slider
     slider_ships = PatternSlider(
@@ -55,7 +57,7 @@ def main():
 
     # Create the window
     screen = pygame.display.set_mode(
-        (CELLS_W * CELL_SIZE, CELLS_H * CELL_SIZE))
+        (CELLS_W * CELL_SIZE, CELLS_H * CELL_SIZE), pygame.DOUBLEBUF)
 
     # Set the window title
     pygame.display.set_caption('Game of Life')
@@ -65,7 +67,6 @@ def main():
 
     pattern = None
     paused = False
-
     threads = []
 
     # Main loop
@@ -82,18 +83,18 @@ def main():
             # Check if the mouse is clicked
             if event.type == pygame.MOUSEBUTTONDOWN:
                 # If mouse clicked reload button
-                if bttn_reload.get_rect().collidepoint(event.pos):
+                if buttons['reload'].get_rect().collidepoint(event.pos):
                     cells = Grid(CELL_SIZE, CELLS_W, CELLS_H)
                     continue
 
                 # If mouse clicked pause button
-                if bttn_pause.get_rect().collidepoint(event.pos):
+                if buttons['pause'].get_rect().collidepoint(event.pos):
                     paused = not paused
-                    bttn_pause.set_image(icons['play'] if paused else icons['pause'])
+                    buttons['pause'].set_image(icons['play'] if paused else icons['pause'])
                     continue
 
                 # If mouse clicked clear button
-                if bttn_clear.get_rect().collidepoint(event.pos):
+                if buttons['clear'].get_rect().collidepoint(event.pos):
                     cells.clear()
                     continue
 
@@ -131,31 +132,32 @@ def main():
         screen.fill((0, 0, 0))
 
         if not paused:
+            # Calculate the neighbors
             for i in range(THREADS_COUNT):
                 thread = Thread(target=cells.calculate_neighbors, args=(i, THREADS_COUNT))
                 thread.start()
                 threads.append(thread)
             
+            # Wait for the threads to finish
             for thread in threads:
                 thread.join()
-
-            # Calculate the neighbors
-            #cells.calculate_neighbors()
+            
+            threads = []
 
         # Update and draw the cells
         cells.evolve(screen)
 
         # Slide the buttons in and out
         if (pygame.mouse.get_pos()[1] > (CELLS_H * CELL_SIZE - 200)):
-            if (bttn_reload.y > (CELLS_H * CELL_SIZE) - 75):
-                bttn_reload.y = bttn_reload.y - (BTTN_SLIDE_SPEED * dt)
-                bttn_pause.y = bttn_pause.y - (BTTN_SLIDE_SPEED * dt)
-                bttn_clear.y = bttn_clear.y - (BTTN_SLIDE_SPEED * dt)
+            if (buttons['reload'].y > (CELLS_H * CELL_SIZE) - 75):
+                buttons['reload'].y = buttons['reload'].y - (BTTN_SLIDE_SPEED * dt)
+                buttons['pause'].y = buttons['pause'].y - (BTTN_SLIDE_SPEED * dt)
+                buttons['clear'].y = buttons['clear'].y - (BTTN_SLIDE_SPEED * dt)
         else:
-            if (bttn_reload.y < (CELLS_H * CELL_SIZE) + 50):
-                bttn_reload.y = bttn_reload.y + (BTTN_SLIDE_SPEED * dt)
-                bttn_pause.y = bttn_pause.y + (BTTN_SLIDE_SPEED * dt)
-                bttn_clear.y = bttn_clear.y + (BTTN_SLIDE_SPEED * dt)
+            if (buttons['reload'].y < (CELLS_H * CELL_SIZE) + 50):
+                buttons['reload'].y = buttons['reload'].y + (BTTN_SLIDE_SPEED * dt)
+                buttons['pause'].y = buttons['pause'].y + (BTTN_SLIDE_SPEED * dt)
+                buttons['clear'].y = buttons['clear'].y + (BTTN_SLIDE_SPEED * dt)
 
         # Slide the pattern slider in and out
         if (pygame.mouse.get_pos()[0] > (CELLS_W * CELL_SIZE - 200)):
@@ -175,9 +177,8 @@ def main():
             pattern.draw(screen, x, y, CELL_SIZE)
 
         # Draw the buttons
-        bttn_reload.draw(screen)
-        bttn_pause.draw(screen)
-        bttn_clear.draw(screen)
+        for button in buttons.values():
+            button.draw(screen)
 
         # Draw the pattern slider
         slider_ships.draw(screen)
