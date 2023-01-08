@@ -2,7 +2,7 @@ from pygame import Rect
 from pygame import transform
 from pygame import draw
 from pygame import image
-
+from pygame import Surface
 
 class VisualElement:
     '''
@@ -67,6 +67,13 @@ class PatternSlider (VisualElement):
         self.patterns = []
         self.index = 0
 
+        self.background = Surface(
+            (self.size, self.size + 10)
+        )
+
+        self.background.fill((28, 27, 34))
+        self.background.set_alpha(200)
+
         self.prev_button = ImageButton(
             self.x,
             self.y + self.size + 10,
@@ -104,6 +111,7 @@ class PatternSlider (VisualElement):
         self.index = (self.index - 1) % len(self.patterns)
 
     def draw_layout(self, x, y, screen):
+        # TODO: center the pattern in the slider (horizontally)
         current_pattern = self.patterns[self.index]
         cell_size = self.size // current_pattern.size
 
@@ -122,11 +130,12 @@ class PatternSlider (VisualElement):
         '''
         Draw the slider on the screen.
         '''
-        
+        screen.blit(self.background, (self.x, self.y))
+
         self.draw_layout(self.x, self.y, screen)
 
-        self.next_button.x = self.x + self.size - self.size // 4
-        self.prev_button.x = self.x
+        self.next_button.y = self.y + self.size + 10
+        self.prev_button.y = self.y + self.size + 10
 
         self.next_button.draw(screen)
         self.prev_button.draw(screen)
