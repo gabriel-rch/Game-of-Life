@@ -67,23 +67,16 @@ class PatternSlider (VisualElement):
         self.patterns = []
         self.index = 0
 
-        self.background = Surface(
-            (self.size, self.size + 10)
-        )
-
-        self.background.fill((28, 27, 34))
-        self.background.set_alpha(200)
-
         self.prev_button = ImageButton(
-            self.x,
-            self.y + self.size + 10,
-            self.size // 4)
+            self.x - (self.size // 2) - 10,
+            self.y + (self.size // 4),
+            self.size // 2)
         self.prev_button.set_image(image.load('assets/back-bttn.png'))
 
         self.next_button = ImageButton(
-            self.x + self.size - self.size // 4,
-            self.y + self.size + 10,
-            self.size // 4)
+            self.x + self.size + 10,
+            self.y + (self.size // 4),
+            self.size // 2)
         self.next_button.set_image(image.load('assets/next-bttn.png'))
 
     def add_pattern(self, pattern):
@@ -130,12 +123,29 @@ class PatternSlider (VisualElement):
         '''
         Draw the slider on the screen.
         '''
-        screen.blit(self.background, (self.x, self.y))
 
         self.draw_layout(self.x, self.y, screen)
 
-        self.next_button.y = self.y + self.size + 10
-        self.prev_button.y = self.y + self.size + 10
+        self.next_button.y = self.y + (self.size // 4)
+        self.prev_button.y = self.y + (self.size // 4)
 
         self.next_button.draw(screen)
         self.prev_button.draw(screen)
+
+
+class Panel (VisualElement):
+    '''
+    A simple background panel.
+    '''
+    def __init__(self, x, y, size, color, alpha):
+        super().__init__(x, y, size)
+        self.panel = Surface((self.size, self.size))
+        self.panel.fill(color)
+        self.panel.set_alpha(alpha)
+
+    def draw(self, screen):
+        '''
+        Draw the panel on the screen.
+        '''
+        screen.blit(self.panel, (self.x, self.y))
+        

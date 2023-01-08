@@ -5,6 +5,7 @@ from life import Grid
 
 from GUI import ImageButton
 from GUI import PatternSlider
+from GUI import Panel
 
 from rle import Decoder
 
@@ -46,7 +47,11 @@ def main():
 
     # Setup the pattern slider
     slider_ships = PatternSlider(
-        (CELLS_W * CELL_SIZE) - 100, (CELLS_H * CELL_SIZE) + 20, 50)
+        (CELLS_W * CELL_SIZE) - 120, (CELLS_H * CELL_SIZE) + 50, 50)
+
+    # Setup the bottom panel
+    bottom_panel = Panel(
+        0, (CELLS_H * CELL_SIZE) + 20, (CELLS_W * CELL_SIZE), (11, 20, 26), 250)
 
     for file in os.listdir('patterns'):
         pattern = Decoder('patterns/' + file).decode()
@@ -146,14 +151,16 @@ def main():
         cells.evolve(screen)
 
         # Slide the buttons in and out
-        if (pygame.mouse.get_pos()[1] > (CELLS_H * CELL_SIZE - 200)):
+        if (pygame.mouse.get_pos()[1] > (CELLS_H * CELL_SIZE - 110) and not pattern):
             if (buttons['reload'].y > (CELLS_H * CELL_SIZE) - 75):
+                bottom_panel.y = bottom_panel.y - (BTTN_SLIDE_SPEED * dt)
                 buttons['reload'].y = buttons['reload'].y - (BTTN_SLIDE_SPEED * dt)
                 buttons['pause'].y = buttons['pause'].y - (BTTN_SLIDE_SPEED * dt)
                 buttons['clear'].y = buttons['clear'].y - (BTTN_SLIDE_SPEED * dt)
                 slider_ships.y = slider_ships.y - (BTTN_SLIDE_SPEED * dt)
         else:
             if (buttons['reload'].y < (CELLS_H * CELL_SIZE) + 50):
+                bottom_panel.y = bottom_panel.y + (BTTN_SLIDE_SPEED * dt)
                 buttons['reload'].y = buttons['reload'].y + (BTTN_SLIDE_SPEED * dt)
                 buttons['pause'].y = buttons['pause'].y + (BTTN_SLIDE_SPEED * dt)
                 buttons['clear'].y = buttons['clear'].y + (BTTN_SLIDE_SPEED * dt)
@@ -165,6 +172,9 @@ def main():
             x = x - (pattern.size * CELL_SIZE)
             y = y - (pattern.size * CELL_SIZE)
             pattern.draw(screen, x, y, CELL_SIZE)
+
+        # Draw the bottom panel
+        bottom_panel.draw(screen)
 
         # Draw the buttons
         for button in buttons.values():
