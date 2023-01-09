@@ -38,7 +38,8 @@ class Decoder:
 
             # Information parsing
             if line.startswith('#'):
-                self.pattern_name = line[2:] if line.startswith('N') else None
+                if not self.pattern_name:
+                    self.pattern_name = line[2:].strip('\n') if line[1:].startswith('N') else None
                 continue
 
             # Header parsing

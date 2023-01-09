@@ -68,6 +68,8 @@ class PatternSlider (VisualElement):
         super().__init__(x, y, size)
 
         self.patterns = []
+        self.names = []
+
         self.index = 0
 
         self.prev_button = ImageButton(
@@ -82,11 +84,18 @@ class PatternSlider (VisualElement):
             self.size // 2)
         self.next_button.set_image(image.load('assets/next-bttn.png'))
 
+        init_font()
+        self.font = Font('assets/Pixellari.ttf', 16)
+
     def add_pattern(self, pattern):
         '''
         Add a pattern to the slider.
         '''
         self.patterns.append(pattern)
+        
+        self.names.append(
+            self.font.render(pattern.name, True, (255, 255, 255))
+        )
 
     def selected(self):
         '''
@@ -107,6 +116,10 @@ class PatternSlider (VisualElement):
         self.index = (self.index - 1) % len(self.patterns)
 
     def draw_layout(self, x, y, screen):
+        '''
+        Draw the layout of the selected item.
+        '''
+
         # TODO: center the pattern in the slider (horizontally)
         current_pattern = self.patterns[self.index]
         cell_size = self.size // current_pattern.size
@@ -134,12 +147,18 @@ class PatternSlider (VisualElement):
 
         self.next_button.draw(screen)
         self.prev_button.draw(screen)
+        
+        screen.blit(
+            self.names[self.index], 
+            (self.x + (self.size // 2) - (self.names[self.index].get_width() // 2), 
+            self.y + self.size + 10))
 
 
 class Panel (VisualElement):
     '''
     A simple background panel.
     '''
+
     def __init__(self, x, y, width, height, color, alpha):
         super().__init__(x, y, {'w': width, 'h': height})
         self.panel = Surface((self.size['w'], self.size['h']))
@@ -150,10 +169,15 @@ class Panel (VisualElement):
         '''
         Draw the panel on the screen.
         '''
+
         screen.blit(self.panel, (self.x, self.y))
 
 
 class MenuBar (VisualElement):
+    '''
+    A MenuBar is a panel at the top of the screen that contains menu items.
+    '''
+
     def __init__(self, width, height, color):
         super().__init__(0, 0, {'w': width, 'h': height})
         self.background = Panel(0, 0, self.size['w'], self.size['h'], color, 255)
@@ -164,6 +188,10 @@ class MenuBar (VisualElement):
         self.items = []
 
     def add_item(self, itm):
+        '''
+        Adds a MenuItem to the MenuBar and calculates it's position.
+        '''
+
         itm.text = self.font.render(itm.text, True, (255, 255, 255))
         self.items.append(itm)
 
@@ -176,6 +204,10 @@ class MenuBar (VisualElement):
             curr_x += item.text.get_width() + pad
     
     def draw(self, screen):
+        '''
+        Render the MenuBar on the screen.
+        '''
+
         self.background.draw(screen)
 
         for item in self.items:
@@ -183,6 +215,10 @@ class MenuBar (VisualElement):
 
 
 class MenuItem():
+    '''
+    A MenuItem is a list of menu options.
+    '''
+
     def __init__(self, text):
         self.x = None
         self.y = None

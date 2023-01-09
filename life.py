@@ -131,7 +131,7 @@ class Pattern:
     def __init__(self, name, layout: list = [[bool]]):
         self.name = name
         self.layout = layout
-        self.size = len(layout)
+        self.size = len(layout)        
 
     def at(self, x, y):
         return self.layout[x][y]
