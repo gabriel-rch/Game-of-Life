@@ -21,9 +21,12 @@ class Cell:
         next_status (bool): The next state of the cell.
         neighbors (list): A list of all valid neighbors.
     '''
-    def __init__(self, x, y, size, alive):
+    def __init__(self, x, y, size, alive, offset_x, offset_y):
         self.x = x
         self.y = y
+
+        self.offset_x = offset_x
+        self.offset_y = offset_y
 
         self.size = size
         self.color = (x % 255, y % 255, 100)
@@ -69,12 +72,14 @@ class Cell:
             pygame.draw.rect(
                 screen,
                 self.color,
-                (self.x * self.size, self.y * self.size, self.size, self.size))
+                ((self.x + self.offset_x) * self.size, 
+                 (self.y + self.offset_y) * self.size, 
+                 self.size, self.size))
 
 
 class Grid:
-    def __init__(self, cell_size, cells_w, cells_h):
-        self.cells = [[Cell(x, y, cell_size, bool(random.getrandbits(1)))
+    def __init__(self, cell_size, cells_w, cells_h, offset_x, offset_y):
+        self.cells = [[Cell(x, y, cell_size, bool(random.getrandbits(1)), offset_x, offset_y)
                       for y in range(cells_h)]
                       for x in range(cells_w)]
 

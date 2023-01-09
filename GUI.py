@@ -4,6 +4,9 @@ from pygame import draw
 from pygame import image
 from pygame import Surface
 
+from pygame.font import Font
+from pygame.font import init as init_font
+
 class VisualElement:
     '''
     Base class for all visual elements.
@@ -137,9 +140,9 @@ class Panel (VisualElement):
     '''
     A simple background panel.
     '''
-    def __init__(self, x, y, size, color, alpha):
-        super().__init__(x, y, size)
-        self.panel = Surface((self.size, self.size))
+    def __init__(self, x, y, width, height, color, alpha):
+        super().__init__(x, y, {'w': width, 'h': height})
+        self.panel = Surface((self.size['w'], self.size['h']))
         self.panel.fill(color)
         self.panel.set_alpha(alpha)
 
@@ -148,4 +151,41 @@ class Panel (VisualElement):
         Draw the panel on the screen.
         '''
         screen.blit(self.panel, (self.x, self.y))
+
+
+class MenuBar (VisualElement):
+    def __init__(self, width, height, color):
+        super().__init__(0, 0, {'w': width, 'h': height})
+        self.background = Panel(0, 0, self.size['w'], self.size['h'], color, 255)
+        
+        init_font()
+        self.font = Font('assets/Pixellari.ttf', 18)
+
+        self.items = []
+
+    def add_item(self, itm):
+        itm.text = self.font.render(itm.text, True, (255, 255, 255))
+        self.items.append(itm)
+
+        curr_x = self.x
+        pad = 10
+        for item in self.items:
+            item.x = curr_x + pad // 2
+            item.y = self.y + (self.size['h'] // 4)
+            
+            curr_x += item.text.get_width() + pad
+    
+    def draw(self, screen):
+        self.background.draw(screen)
+
+        for item in self.items:
+            screen.blit(item.text, (item.x, item.y))
+
+
+class MenuItem():
+    def __init__(self, text):
+        self.x = None
+        self.y = None
+        
+        self.text = text
         

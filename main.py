@@ -6,6 +6,8 @@ from life import Grid
 from GUI import ImageButton
 from GUI import PatternSlider
 from GUI import Panel
+from GUI import MenuBar
+from GUI import MenuItem
 
 from rle import Decoder
 
@@ -17,10 +19,16 @@ CELLS_H = 150
 CELL_SIZE = 6
 BTTN_SLIDE_SPEED = 0.2
 THREADS_COUNT = 2
+MENUBAR_H = 4
+
+# Colors
+colors = {
+    'avery': (11, 20, 26)
+}
 
 def main():
     # Setup the grid
-    cells = Grid(CELL_SIZE, CELLS_W, CELLS_H)
+    cells = Grid(CELL_SIZE, CELLS_W, CELLS_H, 0, MENUBAR_H)
 
     # load the images
     icons = {
@@ -51,8 +59,18 @@ def main():
 
     # Setup the bottom panel
     bottom_panel = Panel(
-        0, (CELLS_H * CELL_SIZE) + 20, (CELLS_W * CELL_SIZE), (11, 20, 26), 250)
+        0, (CELLS_H * CELL_SIZE) + 20, (CELLS_W * CELL_SIZE), 160, colors['avery'], 250)
 
+    # Setup the menu
+    menu = MenuBar(CELLS_W * CELL_SIZE, MENUBAR_H * CELL_SIZE, colors['avery'])
+    
+    item_file = MenuItem('File')
+    item_edit = MenuItem('Edit')
+    
+    menu.add_item(item_file)
+    menu.add_item(item_edit)
+
+    # Load the patterns
     for file in os.listdir('patterns'):
         pattern = Decoder('patterns/' + file).decode()
         slider_ships.add_pattern(pattern)
@@ -62,7 +80,7 @@ def main():
 
     # Create the window
     screen = pygame.display.set_mode(
-        (CELLS_W * CELL_SIZE, CELLS_H * CELL_SIZE))
+        (CELLS_W * CELL_SIZE, (CELLS_H * CELL_SIZE) + (MENUBAR_H * CELL_SIZE)))
 
     # Set the window title
     pygame.display.set_caption('Game of Life')
@@ -85,11 +103,18 @@ def main():
                 pygame.quit()
                 return
 
+            if event.type == pygame.KEYDOWN:
+                # Check if the space bar is pressed
+                if event.key == pygame.K_SPACE:
+                    paused = not paused
+                    buttons['pause'].set_image(icons['play'] if paused else icons['pause'])
+                    continue
+
             # Check if the mouse is clicked
             if event.type == pygame.MOUSEBUTTONDOWN:
                 # If mouse clicked reload button
                 if buttons['reload'].get_rect().collidepoint(event.pos):
-                    cells = Grid(CELL_SIZE, CELLS_W, CELLS_H)
+                    cells = Grid(CELL_SIZE, CELLS_W, CELLS_H, 0, MENUBAR_H)
                     continue
 
                 # If mouse clicked pause button
@@ -120,17 +145,17 @@ def main():
                     x, y = pygame.mouse.get_pos()
 
                     x = (x - (pattern.size * CELL_SIZE)) // CELL_SIZE
-                    y = (y - (pattern.size * CELL_SIZE)) // CELL_SIZE
+                    y = (y - (pattern.size * CELL_SIZE)) // CELL_SIZE - 2
 
                     cells.insert_pattern(pattern, x, y)
                     pattern = None
 
                 # TODO: put this in a button (maybe revive cell button)
-                # x, y = pygame.mouse.get_pos()
-                # x = x // CELL_SIZE
-                # y = y // CELL_SIZE
+                #x, y = pygame.mouse.get_pos()
+                #x = x // CELL_SIZE
+                #y = y // CELL_SIZE
 
-                # cells.revive_cell(x, y)
+                #cells.revive_cell(x, y)
 
         screen.fill((0, 0, 0))
 
@@ -168,9 +193,10 @@ def main():
                 
         # Draw the held pattern
         if pattern:
+            # TODO: fix preview not matching actual placed pattern
             x, y = pygame.mouse.get_pos()
             x = x - (pattern.size * CELL_SIZE)
-            y = y - (pattern.size * CELL_SIZE)
+            y = (y - (pattern.size * CELL_SIZE)) + MENUBAR_H
             pattern.draw(screen, x, y, CELL_SIZE)
 
         # Draw the bottom panel
@@ -182,6 +208,9 @@ def main():
 
         # Draw the pattern slider
         slider_ships.draw(screen)
+
+        # Draw the menu
+        menu.draw(screen)
 
         pygame.display.update()
 
