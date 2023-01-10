@@ -7,10 +7,12 @@ from pygame import Surface
 from pygame.font import Font
 from pygame.font import init as init_font
 
+# TODO: create a better abstract class.
 class VisualElement:
     '''
     Base class for all visual elements.
     '''
+
     def __init__(self, x, y, size):
         self.x = x
         self.y = y
@@ -18,7 +20,7 @@ class VisualElement:
 
     def get_rect(self):
         '''
-        Get the rect of the button.
+        Get the rect of the element.
         '''
         return Rect(
             self.x, self.y,
@@ -28,8 +30,10 @@ class VisualElement:
 
 class ImageButton (VisualElement):
     '''
-    A basic button with an image.
+    A button that displays an image. Performs an action when clicked.
+    The image is resized to fit the button's size.
     '''
+
     def __init__(self, x, y, size, image=None):
         super().__init__(x, y, size)
 
@@ -62,7 +66,8 @@ class ImageButton (VisualElement):
 
 class PatternSlider (VisualElement):
     '''
-    A slider to select an item.
+    A slider used to select a pattern. Patterns are displayed one at a time
+    and can be cycled through. ImageButtons are used to navigate the slider.
     '''
     def __init__(self, x, y, size):
         super().__init__(x, y, size)
@@ -156,7 +161,7 @@ class PatternSlider (VisualElement):
 
 class Panel (VisualElement):
     '''
-    A simple background panel.
+    A simple background panel that is drawn behind other graphical elements.
     '''
 
     def __init__(self, x, y, width, height, color, alpha):
@@ -175,34 +180,57 @@ class Panel (VisualElement):
 
 class MenuBar (VisualElement):
     '''
-    A MenuBar is a panel at the top of the screen that contains menu items.
+    A MenuBar is a panel at the top of the screen that contains several menus.
+    Each menu has it's own set of menu items.
+    The menus are displayed horizontally in the order they were added.
     '''
 
     def __init__(self, width, height, color):
         super().__init__(0, 0, {'w': width, 'h': height})
         self.background = Panel(0, 0, self.size['w'], self.size['h'], color, 255)
-        
-        init_font()
-        self.font = Font('assets/Pixellari.ttf', 18)
 
-        self.items = []
+        self.menus = []
 
-    def add_item(self, itm):
+        self.active_menu = None
+
+    def add_menu(self, menu):
         '''
-        Adds a MenuItem to the MenuBar and calculates it's position.
+        Adds a menu to the MenuBar and calculates it's position.
         '''
-
-        itm.text = self.font.render(itm.text, True, (255, 255, 255))
-        self.items.append(itm)
+        self.menus.append(menu)
 
         curr_x = self.x
         pad = 10
-        for item in self.items:
-            item.x = curr_x + pad // 2
-            item.y = self.y + (self.size['h'] // 4)
-            
-            curr_x += item.text.get_width() + pad
+        for menu in self.menus:
+            menu.x = curr_x + pad // 2
+            menu.y = self.y + (self.size['h'] // 4)
+            menu._position_items()
+
+            curr_x += menu.text.get_width() + pad
     
+    def clicked_menu(self, pos):
+        '''
+        Determines wich menu on the bar was clicked. Or if none were clicked.
+        This method is called per mouse click.
+        '''
+
+        x, y = pos
+
+        if y > self.size['h']:
+            self.active_menu = False
+            return
+        
+        pad = 10
+        for menu in self.menus:            
+            if x < menu.x + menu.text.get_width() + pad:
+                if self.active_menu:
+                    self.active_menu.is_active = False
+                self.active_menu = menu
+                self.active_menu.is_active = True
+                return
+        
+        self.active_menu = False
+
     def draw(self, screen):
         '''
         Render the MenuBar on the screen.
@@ -210,18 +238,80 @@ class MenuBar (VisualElement):
 
         self.background.draw(screen)
 
-        for item in self.items:
-            screen.blit(item.text, (item.x, item.y))
+        for menu in self.menus:
+            screen.blit(menu.text, (menu.x, menu.y))
+        
+        if self.active_menu:
+            self.active_menu.draw(screen)
 
 
-class MenuItem():
+
+class Menu():
     '''
-    A MenuItem is a list of menu options.
+    A Menu is a list of menu items that perform actions when clicked.
+    The items are displayed vertically in the order they were added.
+
+    A Menu is meant to be used in a MenuBar.
     '''
 
     def __init__(self, text):
         self.x = None
         self.y = None
         
+        init_font()
+        self.font = Font('assets/Pixellari.ttf', 18)
+
+        self.text = self.font.render(text, True, (255, 255, 255))
+        self.items = []
+
+        self.background = None
+
+        self.is_active = False
+    
+    def add_item(self, item):
+        '''
+        Adds an item to the menu. If the item is another Menu, the item
+        becomes a submenu. If it is a MenuItem, the item is a clickable
+        button.
+        '''
+        # TODO: check if item is Menu or MenuItem
+        item.text = self.font.render(item.text, True, (255, 255, 255))
+        self.items.append(item)
+
+    def _position_items(self):
+        '''
+        Private function that position all of the menu's items.
+        Called after the y value of the MenuBar is passed to the Menu. 
+        '''
+        curr_y = self.y + self.text.get_height() + 10
+        max_width = 0
+        for item in self.items:
+            item.x = self.x + 5
+            item.y = curr_y
+            
+            if item.text.get_width() > max_width:
+                max_width = item.text.get_width()
+
+            curr_y += item.text.get_height() + 10
+        
+        self.background = Panel(
+            self.x, self.y + self.text.get_height(), max_width + 15, 
+            curr_y - (self.y + self.text.get_height()) + 5,
+            (11, 20, 26), 255)
+
+    def draw(self, screen):
+        self.background.draw(screen)
+        for item in self.items:
+            screen.blit(item.text, (item.x, item.y))
+
+
+class MenuItem():
+    '''
+    A MenuItem works like a button in the sense that it performs an action when clicked.
+    '''
+    def __init__(self, text):
+        self.x = None
+        self.y = None
+
         self.text = text
         

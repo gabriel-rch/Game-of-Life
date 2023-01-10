@@ -6,6 +6,7 @@ from life import Grid
 from GUI import ImageButton
 from GUI import PatternSlider
 from GUI import Panel
+from GUI import Menu
 from GUI import MenuBar
 from GUI import MenuItem
 
@@ -64,11 +65,18 @@ def main():
     # Setup the menu
     menu = MenuBar(CELLS_W * CELL_SIZE, MENUBAR_H * CELL_SIZE, colors['avery'])
     
-    item_file = MenuItem('File')
-    item_edit = MenuItem('Edit')
+    menu_file = Menu('File')
+    menu_edit = Menu('Edit')
     
-    menu.add_item(item_file)
-    menu.add_item(item_edit)
+    menu_file.add_item(MenuItem('Place'))
+    menu_file.add_item(MenuItem('Holder'))
+
+    menu_edit.add_item(MenuItem('This is Temporary'))
+    menu_edit.add_item(MenuItem('It Will Be Changed'))
+    menu_edit.add_item(MenuItem('Do Not Worry'))
+
+    menu.add_menu(menu_file)
+    menu.add_menu(menu_edit)
 
     # Load the patterns
     for file in os.listdir('patterns'):
@@ -149,6 +157,9 @@ def main():
 
                     cells.insert_pattern(pattern, x, y)
                     pattern = None
+
+                # If mouse clicked the menu
+                menu.clicked_menu(pygame.mouse.get_pos())
 
                 # TODO: put this in a button (maybe revive cell button)
                 #x, y = pygame.mouse.get_pos()
