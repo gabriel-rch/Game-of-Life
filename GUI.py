@@ -166,9 +166,22 @@ class Panel (VisualElement):
 
     def __init__(self, x, y, width, height, color, alpha):
         super().__init__(x, y, {'w': width, 'h': height})
+        
+        self.color = color
+        self.alpha = alpha
+        
         self.panel = Surface((self.size['w'], self.size['h']))
-        self.panel.fill(color)
-        self.panel.set_alpha(alpha)
+        self.panel.fill(self.color)
+        self.panel.set_alpha(self.alpha)
+
+    def set_width(self, width):
+        '''
+        Set the width of the panel.
+        '''
+        self.size['w'] = width
+        self.panel = Surface((self.size['w'], self.size['h']))
+        self.panel.fill(self.color)
+        self.panel.set_alpha(self.alpha)
 
     def draw(self, screen):
         '''
@@ -275,7 +288,11 @@ class Menu():
         button.
         '''
         # TODO: check if item is Menu or MenuItem
-        item.text = self.font.render(item.text, True, (255, 255, 255))
+        item.default_text = self.font.render(item.text, True, (255, 255, 255))
+        item.hover_text = self.font.render(item.text, True, (100, 120, 175))
+        
+        item.text = item.default_text
+
         self.items.append(item)
 
     def _position_items(self):
@@ -285,6 +302,7 @@ class Menu():
         '''
         curr_y = self.y + self.text.get_height() + 10
         max_width = 0
+        
         for item in self.items:
             item.x = self.x + 5
             item.y = curr_y
@@ -292,11 +310,14 @@ class Menu():
             if item.text.get_width() > max_width:
                 max_width = item.text.get_width()
 
-            curr_y += item.text.get_height() + 10
+            curr_y += item.text.get_height() + 15
         
+        for item in self.items:
+            item.width = max_width
+
         self.background = Panel(
             self.x, self.y + self.text.get_height(), max_width + 15, 
-            curr_y - (self.y + self.text.get_height()) + 5,
+            curr_y - (self.y + self.text.get_height()) - 10,
             (11, 20, 26), 255)
 
     def draw(self, screen):
@@ -312,6 +333,17 @@ class MenuItem():
     def __init__(self, text):
         self.x = None
         self.y = None
+        self.width = None
 
         self.text = text
+
+        self.default_text = None
+        self.hover_text = None
+    
+    def hover(self, pos):
+        x, y = pos
+        if x > self.x and x < self.x + self.width:
+            if y > self.y and y < self.y + self.text.get_height() + 5:
+                return True
+        return False
         

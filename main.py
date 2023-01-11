@@ -105,6 +105,8 @@ def main():
         # Set the FPS
         dt = clock.tick(30)
 
+        mouse_pos = pygame.mouse.get_pos()
+
         # Check for events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -159,7 +161,9 @@ def main():
                     pattern = None
 
                 # If mouse clicked the menu
-                menu.clicked_menu(pygame.mouse.get_pos())
+                menu.clicked_menu(mouse_pos)
+
+        
 
                 # TODO: put this in a button (maybe revive cell button)
                 #x, y = pygame.mouse.get_pos()
@@ -222,6 +226,15 @@ def main():
 
         # Draw the menu
         menu.draw(screen)
+
+        # If there is a menu open
+        # TODO: fix lag
+        if menu.active_menu:
+            for item in menu.active_menu.items:
+                if item.hover(mouse_pos):
+                    item.text = item.hover_text
+                else:
+                    item.text = item.default_text
 
         pygame.display.update()
 
