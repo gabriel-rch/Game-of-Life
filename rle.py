@@ -14,118 +14,85 @@
 
 from life import Pattern
 import re
+import os
 
-class Decoder:
-    '''Reads a Run Length Encoded (RLE) file and returns a Pattern object'''
+def _open_file(file_path):
+    if os.path.exists(file_path):
+        return open(file_path, 'r')
+    else:
+        raise FileNotFoundError(f"File '{file_path}' not found")
 
-    def __init__(self, filename):
-        self._open_file(filename)
-        self.pattern_name = None
-        self.pattern_w = None
-        self.pattern_h = None
+def decode(file_path):
+    '''Reads the file and returns a Pattern object'''
+    file = _open_file(file_path)
 
-    def _open_file(self, filename):
-        # TODO: check existence of file
-        self.filename = filename
-    
-    def decode(self):
-        '''Reads the file and returns a Pattern object'''
-        # TODO: read file and return a Pattern object
-        file = open(self.filename, 'r')
+    pattern_w = None
+    pattern_h = None
+    pattern_name = "Unknown Pattern"
 
-        while True:
-            line = file.readline()
+    line = 'stub'
+    while not (line.endswith('!') or not line):
+        # read the next line
+        line = file.readline()
 
-            # Information parsing
-            if line.startswith('#'):
-                if not self.pattern_name:
-                    self.pattern_name = line[2:].strip('\n') if line[1:].startswith('N') else None
-                continue
-
-            # Header parsing
-            if not self.pattern_w:
-                # match the width and height of the pattern
-                match_w = re.search(r"x\s*=\s*(\d+)", line)
-                match_h = re.search(r"y\s*=\s*(\d+)", line)
-
-                if match_w and match_h:
-                    w = int(match_w.group(1))
-                    h = int(match_h.group(1))
-
-                    cells = [[] for i in range(h)]
-
-                    # choose the largest dimension as the width and height
-                    self.pattern_w = h if h > w else w
-                    self.pattern_h = w if w > h else h
-
-                    continue
+        # information parsing
+        if line.startswith('#'):
+            info_type = line[1]
+            match (info_type):
+                case 'N':
+                    pattern_name = line[2:].strip('\n   ') 
+            continue
+        
+        # header parsing
+        if not (pattern_w and pattern_h):
+            match = re.search(r"x\s*=\s*(\d+),\s*y\s*=\s*(\d+)", line)
+            if match:
+                pattern_w = int(match.group(1))
+                pattern_h = int(match.group(2))
                 
-                else:
-                    # TODO: handle invalid file
-                    pass
+                cells = [[] for _ in range(pattern_h)]
+        
+        # data parsing
+        pattern_lines = line.split('$')
+        offset = 0
+        
+        for index, body_line in enumerate(pattern_lines):
             
-            # Data parsing
-
-            # TODO: detect invalid file
-
-            # split the data into a list of the lines in the pattern
-            pattern_lines = line.split('$')
-
-            offset = 0
-
-            # iterate over the lines in the pattern
-            for index, body_line in enumerate(pattern_lines):   
+            # skip empty lines
+            if not body_line:
+                continue
+            
+            # find all the multiple or single runs of 'o' or 'b'
+            for match in re.finditer(r"(\d+)([bo])|([bo])", body_line):
+            
+                # if there is a number, append that many cells
+                if match.group(1):
+                    for i in range(int(match.group(1))):
+                        cells[index + offset].append(1 if match.group(2) == 'o' else 0)
                 
-                # skip empty lines
-                if not body_line:
-                    continue
-
-                # find all the multiple or single runs of 'o' or 'b'
-                for match in re.finditer(r"(\d+)([bo])|([bo])", body_line):
-                    
-                    # if there is a number, append that many cells
-                    if match.group(1):
-                        for i in range(int(match.group(1))):
-                            cells[index + offset].append(1 if match.group(2) == 'o' else 0)
-                    
-                    # if there is no number, append a single cell
-                    else:
-                        cells[index + offset].append(1 if match.group(3) == 'o' else 0)
-                
-                # if the line ends with a number, add that many blank rows
-                if body_line[-1].isnumeric():
-                    offset += int(body_line[-1]) - 1
-
-            # if the line ends with a '!', or is empty, stop reading the file
-            if line.endswith('!') or not line:
-                break
+                # if there is no number, append a single cell
+                else:
+                    cells[index + offset].append(1 if match.group(3) == 'o' else 0)
+            
+            # if the line ends with a number, add that many blank rows
+            if body_line[-1].isnumeric():
+                offset += int(body_line[-1]) - 1
         
-        # pad the pattern with dead cells
-        for row in cells:
-            for i in range(self.pattern_w - len(row)):
-                row.append(0)
+    # pad the pattern with dead cells
+    for row in cells:
+        for i in range(pattern_w - len(row)):
+            row.append(0)
 
-        # pad the pattern with dead rows
-        for i in range(self.pattern_h - len(cells)):
-            if i % 2 == 0:
-                cells.append([0 for i in range(self.pattern_w)])
-            else:
-                cells.insert(0, [0 for i in range(self.pattern_w)])
+    # pad the pattern with dead rows
+    for i in range(pattern_h - len(cells)):
+        if i % 2 == 0:
+            cells.append([0 for _ in range(pattern_w)])
+        else:
+            cells.insert(0, [0 for _ in range(pattern_w)])
 
-        # if the pattern name was not found in the file, use the filename
-        if not self.pattern_name:
-            self.pattern_name = self.filename[:-4]
-        
-        # return the pattern
-        return Pattern(self.pattern_name, cells)
+    # return the pattern
+    return Pattern(pattern_name, cells)
 
-
-class Encoder:
-    '''Encodes a Pattern object into a Run Length Encoded (RLE) file'''
-
-    def __init__(self, pattern):
-        self.pattern = pattern
-
-    def encode(self, filename):
-        '''Encodes the Pattern object into a file'''
-        # TODO: encode the pattern into a file
+def encode(self, file_path):
+    '''Encodes the Pattern object into a file'''
+    # TODO: encode the pattern into a file
