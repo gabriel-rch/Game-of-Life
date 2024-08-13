@@ -111,8 +111,8 @@ class Grid:
                 cell.draw(surface)
 
     def insert_pattern(self, pattern, x, y):
-        for i in range(pattern.size):
-            for j in range(pattern.size):
+        for i, row in enumerate(pattern.layout):
+            for j, _ in enumerate(row):
                 self.cells[x + j][y + i].alive = pattern.at(i, j)
                 self.cells[x + j][y + i].next_status = pattern.at(i, j)
 
@@ -131,18 +131,17 @@ class Pattern:
     def __init__(self, name, layout: list = [[bool]]):
         self.name = name
         self.layout = layout
-        self.size = len(layout)        
+        self.size = len(layout)
 
     def at(self, x, y):
         return self.layout[x][y]
     
-    def draw(self, screen, x, y, size):
-        # TODO: fix out of bounds cell color
-        for i in range(self.size):
-            for j in range(self.size):
+    def draw(self, screen, x, y, cell_size):
+        for i, row in enumerate(self.layout):
+            for j, _ in enumerate(row):
                 if self.at(i, j):
-                    pygame.draw.rect(
-                        screen,
-                        (((x + j) // size) % 255, ((y + i) // size) % 255, 100),
-                        (x + j * size, y + i * size, size, size))
+                    color = (((x + j) // cell_size) % 255, ((y + i) // cell_size) % 255, 100)
+                    rect = (x + j * cell_size, y + i * cell_size, cell_size, cell_size)
+                    
+                    pygame.draw.rect(screen, color, rect)
 

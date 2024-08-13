@@ -51,6 +51,10 @@ def decode(file_path):
                 pattern_h = int(match.group(2))
                 
                 cells = [[] for _ in range(pattern_h)]
+
+        # skip non-RLE lines
+        if re.search(r"[^bo$!\d\n]", line):
+            continue
         
         # data parsing
         pattern_lines = line.split('$')
@@ -61,9 +65,12 @@ def decode(file_path):
             # skip empty lines
             if not body_line:
                 continue
-            
-            # find all the multiple or single runs of 'o' or 'b'
+           
             for match in re.finditer(r"(\d+)([bo])|([bo])", body_line):
+                
+                if pattern_name == "Coe ship": 
+                    print(body_line)
+                    print(match.group(1), match.group(2), match.group(3))
             
                 # if there is a number, append that many cells
                 if match.group(1):
@@ -82,13 +89,6 @@ def decode(file_path):
     for row in cells:
         for i in range(pattern_w - len(row)):
             row.append(0)
-
-    # pad the pattern with dead rows
-    for i in range(pattern_h - len(cells)):
-        if i % 2 == 0:
-            cells.append([0 for _ in range(pattern_w)])
-        else:
-            cells.insert(0, [0 for _ in range(pattern_w)])
 
     # return the pattern
     return Pattern(pattern_name, cells)

@@ -5,91 +5,106 @@ from pygame import image
 from pygame import Surface
 
 from pygame.font import Font
-from pygame.font import init as init_font
 
-# TODO: create a better abstract class.
+from typing import Callable
+
 class VisualElement:
     '''
     Base class for all visual elements.
     '''
 
-    def __init__(self, x, y, size, w=None, h=None):
+    def __init__(self, 
+                 x: int, 
+                 y: int,
+                 width: int = None, 
+                 height: int = None,
+                 color: tuple[int, int, int] = (255, 255, 255),
+                 alpha: int = 255):
+        
         self.x = x
         self.y = y
 
-        self.width = w if w else size
-        self.height = h if h else size
+        self.rect = Rect(x, y, width, height)
+        
+        self.surface = Surface((width, height))
+        self.surface.fill(color)
+        self.surface.set_alpha(alpha)
+    
+    
+    def resize(self, width: int = None, height: int = None):
+        old_surface = self.surface.copy()
+        
+        self.surface = Surface((width or old_surface.get_width(), height or old_surface.get_height()))
+        self.surface.fill(old_surface.get_colorkey())
+        self.surface.set_alpha(old_surface.get_alpha())
 
-        self.size = size
-        self.rect = Rect(x, y, size, size)
 
-    def clicked(self, pos):
+    def set_surface(self, surface: Surface):
+        self.surface = transform.scale(surface, (self.surface.get_width(), self.surface.get_height()))
+    
+    
+    def move(self, x: int = None, y: int = None):
+        old_rect = self.rect.copy()
+        self.rect = Rect(x or old_rect.x, y or old_rect.y, old_rect.width, old_rect.height)
+
+    def hover(self, pos):
         '''
-        Check if the element has been clicked.
+        Check if the mouse is hovering the element.
         '''
-        self.rect = Rect(self.x, self.y, self.size, self.size)
-        if self.rect.collidepoint(pos):
-            return True
-        else:
-            return False
+        return self.rect.collidepoint(pos)
+    
+    
+    def draw(self, screen: Surface):
+        '''
+        Draws the element on the screen.
+        '''
+        screen.blit(self.surface, (self.rect.x, self.rect.y))
 
 
-class ImageButton (VisualElement):
+class ImageButton(VisualElement):
     '''
     A button that displays an image. Performs an action when clicked.
     The image is resized to fit the button's size.
     '''
 
-    def __init__(self, x, y, size, image=None):
-        super().__init__(x, y, size)
-        
-        if image:
-            self.set_image(image)
-        else:
-            self.image = None
-
-    def set_image(self, image):
-        '''
-        Set the image of the button.
-
-        Args:
-            image (pygame.Surface): The image to use.
-        '''
-        self.image = transform.scale(image, (self.size, self.size))
-
-    def draw(self, screen):
-        '''
-        Draw the button on the screen.
-        '''
-        screen.blit(self.image, (self.x, self.y))
+    def __init__(self, x: int, y: int, width: int, height: int, image: Surface):
+        super().__init__(x, y, width, height)
+        super().set_surface(image)
+        self.on_click: Callable = None
 
 
-class PatternSlider (VisualElement):
+class PatternSlider(VisualElement):
     '''
     A slider used to select a pattern. Patterns are displayed one at a time
     and can be cycled through. ImageButtons are used to navigate the slider.
     '''
     def __init__(self, x, y, size):
-        super().__init__(x, y, size)
+        super().__init__(x, y, size, size)
+
+        self.size = size
 
         self.patterns = []
         self.names = []
 
         self.index = 0
 
+        buttons_size = self.size // 2
         self.prev_button = ImageButton(
-            self.x - (self.size // 2) - 10,
-            self.y + (self.size // 4),
-            self.size // 2)
-        self.prev_button.set_image(image.load('assets/img/back-bttn.png'))
+            self.x - buttons_size,
+            self.y + buttons_size,
+            buttons_size,
+            buttons_size,
+            image.load('assets/img/back-bttn.png'))
+        self.prev_button.on_click = self.previous
 
         self.next_button = ImageButton(
-            self.x + self.size + 10,
-            self.y + (self.size // 4),
-            self.size // 2)
-        self.next_button.set_image(image.load('assets/img/next-bttn.png'))
+            self.x + self.size + buttons_size,
+            self.y + buttons_size,
+            buttons_size,
+            buttons_size,
+            image.load('assets/img/next-bttn.png'))
+        self.next_button.on_click = self.next
 
-        init_font()
         self.font = Font('assets/font/Pixellari.ttf', 16)
 
     def add_pattern(self, pattern):
@@ -120,11 +135,12 @@ class PatternSlider (VisualElement):
         '''
         self.index = (self.index - 1) % len(self.patterns)
 
-    def draw_layout(self, x, y, screen):
+    def draw_layout(self, screen):
         '''
         Draw the layout of the selected item.
         '''
-
+        x = self.rect.x
+        y = self.rect.y
         # TODO: center the pattern in the slider (horizontally)
         current_pattern = self.patterns[self.index]
         cell_size = self.size // current_pattern.size
@@ -140,70 +156,88 @@ class PatternSlider (VisualElement):
             x = self.x
             y += cell_size
 
+    def move(self, x: int = None, y: int = None):
+        x_offset = (x or 0) - self.rect.x
+        y_offset = (y or 0) - self.rect.y
+        
+        super().move(x, y)
+        for element in [self.next_button, self.prev_button]:
+            element.move(element.rect.x + x_offset, element.rect.y + y_offset)
+        
+
     def draw(self, screen):
         '''
         Draw the slider on the screen.
         '''
 
-        self.draw_layout(self.x, self.y, screen)
+        self.draw_layout(screen)
 
-        self.next_button.y = self.y + (self.size // 4)
-        self.prev_button.y = self.y + (self.size // 4)
-
-        self.next_button.draw(screen)
         self.prev_button.draw(screen)
+        self.next_button.draw(screen)
         
         screen.blit(
             self.names[self.index], 
-            (self.x + (self.size // 2) - (self.names[self.index].get_width() // 2), 
-            self.y + self.size + 10))
+            (self.rect.x + (self.size // 2) - (self.names[self.index].get_width() // 2), 
+            self.rect.y + self.size + 10))
 
 
-class Panel (VisualElement):
+class Panel(VisualElement):
     '''
-    A simple background panel that is drawn behind other graphical elements.
+    A background panel that contains other elements inside of it and can slide up.
+    The elements contained within the Panel will be moved with it.
     '''
-
-    def __init__(self, x, y, width, height, color, alpha):
-        super().__init__(x, y, width, width, height)
+    def __init__(self, x: int, y: int, width: int, height: int, color, alpha):
+        super().__init__(x, y, width, height, color, alpha)
         
-        self.color = color
-        self.alpha = alpha
+        self.elements: list[VisualElement] = []
         
-        self.panel = Surface((self.width, self.height))
-        self.panel.fill(self.color)
-        self.panel.set_alpha(self.alpha)
+        self.hover_rect = Rect(x, y - height, width, height)
+        
+        self.down_slide_limit = self.rect.y
+        self.up_slide_limit = y - height     
+        
+    
+    def add_element(self, element: VisualElement):
+        self.elements.append(element)
+    
+    
+    def slide(self, amount, forward: bool = False):
+        if self.can_slide():
+            amount = -amount if forward else amount
+            self.move(y = self.rect.y + amount)
+            # Checks to see if the panel overstepped the boundaries
+            if not self.can_slide():
+                closest_edge = self.up_slide_limit if forward else self.down_slide_limit
+                self.move(y=closest_edge)
+                
+    
+    def move(self, x: int = None, y: int = None):        
+        x_offset = (x or 0) - self.rect.x
+        y_offset = (y or 0) - self.rect.y
+        
+        super().move(x, y)
+        for element in self.elements:
+            element.move(element.rect.x + x_offset, element.rect.y + y_offset)
 
-    def set_width(self, width):
-        '''
-        Set the width of the panel.
-        '''
-        self.size['w'] = width
-        self.panel = Surface((self.width, self.height))
-        self.panel.fill(self.color)
-        self.panel.set_alpha(self.alpha)
 
-    def draw(self, screen):
-        '''
-        Draw the panel on the screen.
-        '''
-
-        screen.blit(self.panel, (self.x, self.y))
+    def can_slide(self):
+        return self.rect.y >= self.up_slide_limit and self.rect.y <= self.down_slide_limit
 
 
-class MenuBar (VisualElement):
+    def hover(self, pos):
+        return self.hover_rect.collidepoint(pos)
+
+
+class MenuBar(VisualElement):
     '''
     A MenuBar is a panel at the top of the screen that contains several menus.
     Each menu has it's own set of menu items.
     The menus are displayed horizontally in the order they were added.
     '''
-
     def __init__(self, width, height, color):
-        super().__init__(0, 0, width, width, height)
-        self.background = Panel(0, 0, self.width, self.height, color, 255)
+        super().__init__(0, 0, width, height, color)
 
         self.menus = []
-
         self.active_menu = None
 
     def add_menu(self, menu):
@@ -216,7 +250,7 @@ class MenuBar (VisualElement):
         pad = 10
         for menu in self.menus:
             menu.x = curr_x + pad // 2
-            menu.y = self.y + (self.height // 4)
+            menu.y = self.y + (self.surface.get_height() // 4)
             menu._position_items()
 
             curr_x += menu.text.get_width() + pad
@@ -229,7 +263,7 @@ class MenuBar (VisualElement):
 
         x, y = pos
 
-        if y > self.height:
+        if y > self.surface.get_height():
             self.active_menu = False
             return
         
@@ -248,15 +282,13 @@ class MenuBar (VisualElement):
         '''
         Render the MenuBar on the screen.
         '''
-
-        self.background.draw(screen)
+        super().draw(screen)
 
         for menu in self.menus:
             screen.blit(menu.text, (menu.x, menu.y))
         
         if self.active_menu:
             self.active_menu.draw(screen)
-
 
 
 class Menu():
@@ -271,7 +303,6 @@ class Menu():
         self.x = None
         self.y = None
         
-        init_font()
         self.font = Font('assets/font/Pixellari.ttf', 18)
 
         self.text = self.font.render(text, True, (255, 255, 255))
@@ -346,4 +377,3 @@ class MenuItem():
             if y > self.y and y < self.y + self.text.get_height() + 5:
                 return True
         return False
-        
