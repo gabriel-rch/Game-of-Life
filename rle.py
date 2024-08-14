@@ -67,11 +67,6 @@ def decode(file_path):
                 continue
            
             for match in re.finditer(r"(\d+)([bo])|([bo])", body_line):
-                
-                if pattern_name == "Coe ship": 
-                    print(body_line)
-                    print(match.group(1), match.group(2), match.group(3))
-            
                 # if there is a number, append that many cells
                 if match.group(1):
                     for i in range(int(match.group(1))):

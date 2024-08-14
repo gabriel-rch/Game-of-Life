@@ -1,6 +1,8 @@
 import pygame
 import random
 
+from typing import List
+
 
 class Cell:
     '''
@@ -21,7 +23,7 @@ class Cell:
         next_status (bool): The next state of the cell.
         neighbors (list): A list of all valid neighbors.
     '''
-    def __init__(self, x, y, size, alive, offset_x, offset_y):
+    def __init__(self, x: int, y: int, size: int, alive: bool, offset_x: int, offset_y: int):
         self.x = x
         self.y = y
 
@@ -34,16 +36,16 @@ class Cell:
         self.alive = alive
         self.next_status = alive
 
-        self.neighbors = []
+        self.neighbors: List[Cell] = []
 
-    # Calculate the number of live neighbors
+
     def calculate_neighbors(self):
         '''
         Calculate the number of live neighbors of the cell.
         '''
         live_neighbors = 0
         for neighbor in self.neighbors:
-            live_neighbors = live_neighbors + neighbor.alive
+            live_neighbors += neighbor.alive
 
         # Apply the rules
         if self.alive:
@@ -53,15 +55,15 @@ class Cell:
             if live_neighbors == 3:
                 self.next_status = True
 
-    # Update the cell status
+
     def evolve(self):
         '''
         Update the cell status.
         '''
         self.alive = self.next_status
 
-    # Draw the cell
-    def draw(self, screen):
+
+    def draw(self, screen: pygame.Surface):
         '''
         Draw the cell on the screen, if it is alive.
 
@@ -77,6 +79,25 @@ class Cell:
                  self.size, self.size))
 
 
+class Pattern:
+    def __init__(self, name: str, layout: list = [[bool]]):
+        self.name = name
+        self.layout = layout
+        self.size = len(layout)
+
+    def at(self, x: int, y: int):
+        return self.layout[x][y]
+    
+    def draw(self, screen: pygame.Surface, x: int, y: int, cell_size: int):
+        for i, row in enumerate(self.layout):
+            for j, _ in enumerate(row):
+                if self.at(i, j):
+                    color = (((x + j) // cell_size) % 255, ((y + i) // cell_size) % 255, 100)
+                    rect = (x + j * cell_size, y + i * cell_size, cell_size, cell_size)
+                    
+                    pygame.draw.rect(screen, color, rect)
+
+
 class Grid:
     def __init__(self, cell_size, cells_w, cells_h, offset_x, offset_y):
         self.cells = [[Cell(x, y, cell_size, bool(random.getrandbits(1)), offset_x, offset_y)
@@ -87,7 +108,8 @@ class Grid:
             for cell in row:
                 self.define_neighbors(cell)
 
-    def define_neighbors(self, cell):
+
+    def define_neighbors(self, cell: Cell):
         x, y = cell.x, cell.y
         for i in range(-1, 2):
             for j in range(-1, 2):
@@ -97,6 +119,7 @@ class Grid:
                    and 0 <= y + j < len(self.cells[0]):
                     cell.neighbors.append(self.cells[x + i][y + j])
 
+
     def calculate_neighbors(self, current_thread = 0, total_threads = 1):
         start = current_thread * ((len(self.cells) ** 2) // total_threads)
         stop = (current_thread + 1) * ((len(self.cells) ** 2) // total_threads)
@@ -104,44 +127,29 @@ class Grid:
         for i in range(start, stop):
             self.cells[i // len(self.cells)][i % len(self.cells)].calculate_neighbors()
 
-    def evolve(self, surface):
+
+    def evolve(self, surface: pygame.Surface):
         for row in self.cells:
             for cell in row:
                 cell.evolve()
                 cell.draw(surface)
 
-    def insert_pattern(self, pattern, x, y):
+
+    def insert_pattern(self, pattern: Pattern, x: int, y: int):
         for i, row in enumerate(pattern.layout):
             for j, _ in enumerate(row):
                 self.cells[x + j][y + i].alive = pattern.at(i, j)
                 self.cells[x + j][y + i].next_status = pattern.at(i, j)
 
-    def revive_cell(self, x, y):
+
+    def revive_cell(self, x: int, y: int):
         self.cells[x][y].alive = True
         self.cells[x][y].next_status = True
+
 
     def clear(self):
         for row in self.cells:
             for cell in row:
                 cell.alive = False
                 cell.next_status = False
-
-
-class Pattern:
-    def __init__(self, name, layout: list = [[bool]]):
-        self.name = name
-        self.layout = layout
-        self.size = len(layout)
-
-    def at(self, x, y):
-        return self.layout[x][y]
-    
-    def draw(self, screen, x, y, cell_size):
-        for i, row in enumerate(self.layout):
-            for j, _ in enumerate(row):
-                if self.at(i, j):
-                    color = (((x + j) // cell_size) % 255, ((y + i) // cell_size) % 255, 100)
-                    rect = (x + j * cell_size, y + i * cell_size, cell_size, cell_size)
-                    
-                    pygame.draw.rect(screen, color, rect)
 
