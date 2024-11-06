@@ -175,6 +175,15 @@ class GameOfLife:
                     if event.key == pygame.K_SPACE:
                         self.button_pause_clicked()
                         continue
+                    # Check if the 'r' key is pressed
+                    if event.key == pygame.K_r:
+                        self.button_reload_clicked()
+                        continue
+
+                    # Check if the 'c' key is pressed
+                    if event.key == pygame.K_c:
+                        self.button_clear_clicked()
+                        continue
 
                 # If the mouse is clicked
                 if event.type == pygame.MOUSEBUTTONDOWN:
