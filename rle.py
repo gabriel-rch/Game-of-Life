@@ -16,70 +16,71 @@ from life import Pattern
 import re
 import os
 
+
 def _open_file(file_path):
     if os.path.exists(file_path):
-        return open(file_path, 'r')
+        return open(file_path, "r")
     else:
         raise FileNotFoundError(f"File '{file_path}' not found")
 
+
 def decode(file_path):
-    '''Reads the file and returns a Pattern object'''
+    """Reads the file and returns a Pattern object"""
     file = _open_file(file_path)
 
     pattern_w = None
     pattern_h = None
     pattern_name = "Unknown Pattern"
 
-    line = 'stub'
-    while not (line.endswith('!') or not line):
+    line = "stub"
+    while not (line.endswith("!") or not line):
         # read the next line
         line = file.readline()
 
         # information parsing
-        if line.startswith('#'):
+        if line.startswith("#"):
             info_type = line[1]
-            match (info_type):
-                case 'N':
-                    pattern_name = line[2:].strip('\n   ') 
+            match info_type:
+                case "N":
+                    pattern_name = line[2:].strip("\n   ")
             continue
-        
+
         # header parsing
         if not (pattern_w and pattern_h):
             match = re.search(r"x\s*=\s*(\d+),\s*y\s*=\s*(\d+)", line)
             if match:
                 pattern_w = int(match.group(1))
                 pattern_h = int(match.group(2))
-                
+
                 cells = [[] for _ in range(pattern_h)]
 
         # skip non-RLE lines
         if re.search(r"[^bo$!\d\n]", line):
             continue
-        
+
         # data parsing
-        pattern_lines = line.split('$')
+        pattern_lines = line.split("$")
         offset = 0
-        
+
         for index, body_line in enumerate(pattern_lines):
-            
             # skip empty lines
             if not body_line:
                 continue
-           
+
             for match in re.finditer(r"(\d+)([bo])|([bo])", body_line):
                 # if there is a number, append that many cells
                 if match.group(1):
                     for i in range(int(match.group(1))):
-                        cells[index + offset].append(1 if match.group(2) == 'o' else 0)
-                
+                        cells[index + offset].append(1 if match.group(2) == "o" else 0)
+
                 # if there is no number, append a single cell
                 else:
-                    cells[index + offset].append(1 if match.group(3) == 'o' else 0)
-            
+                    cells[index + offset].append(1 if match.group(3) == "o" else 0)
+
             # if the line ends with a number, add that many blank rows
             if body_line[-1].isnumeric():
                 offset += int(body_line[-1]) - 1
-        
+
     # pad the pattern with dead cells
     for row in cells:
         for i in range(pattern_w - len(row)):
@@ -88,6 +89,7 @@ def decode(file_path):
     # return the pattern
     return Pattern(pattern_name, cells)
 
+
 def encode(self, file_path):
-    '''Encodes the Pattern object into a file'''
+    """Encodes the Pattern object into a file"""
     # TODO: encode the pattern into a file

@@ -5,7 +5,7 @@ from typing import List
 
 
 class Cell:
-    '''
+    """
     A cell is a spot in the grid that can be alive or dead.
     The cell's state is determined by the number of live neighbors it has.
 
@@ -22,7 +22,8 @@ class Cell:
         alive (bool): The current state of the cell.
         next_status (bool): The next state of the cell.
         neighbors (list): A list of all valid neighbors.
-    '''
+    """
+
     def __init__(self, x: int, y: int, size: int, alive: bool, offset_x: int, offset_y: int):
         self.x = x
         self.y = y
@@ -38,11 +39,10 @@ class Cell:
 
         self.neighbors: List[Cell] = []
 
-
     def calculate_neighbors(self):
-        '''
+        """
         Calculate the number of live neighbors of the cell.
-        '''
+        """
         live_neighbors = 0
         for neighbor in self.neighbors:
             live_neighbors += neighbor.alive
@@ -55,28 +55,30 @@ class Cell:
             if live_neighbors == 3:
                 self.next_status = True
 
-
     def evolve(self):
-        '''
+        """
         Update the cell status.
-        '''
+        """
         self.alive = self.next_status
 
-
     def draw(self, screen: pygame.Surface):
-        '''
+        """
         Draw the cell on the screen, if it is alive.
 
         Args:
             screen (pygame.Surface): The screen to draw on.
-        '''
+        """
         if self.alive:
             pygame.draw.rect(
                 screen,
                 self.color,
-                ((self.x + self.offset_x) * self.size, 
-                 (self.y + self.offset_y) * self.size, 
-                 self.size, self.size))
+                (
+                    (self.x + self.offset_x) * self.size,
+                    (self.y + self.offset_y) * self.size,
+                    self.size,
+                    self.size,
+                ),
+            )
 
 
 class Pattern:
@@ -87,46 +89,49 @@ class Pattern:
 
     def at(self, x: int, y: int):
         return self.layout[x][y]
-    
+
     def draw(self, screen: pygame.Surface, x: int, y: int, cell_size: int):
         for i, row in enumerate(self.layout):
             for j, _ in enumerate(row):
                 if self.at(i, j):
                     color = (((x + j) // cell_size) % 255, ((y + i) // cell_size) % 255, 100)
                     rect = (x + j * cell_size, y + i * cell_size, cell_size, cell_size)
-                    
+
                     pygame.draw.rect(screen, color, rect)
 
 
 class Grid:
     def __init__(self, cell_size, cells_w, cells_h, offset_x, offset_y):
-        self.cells = [[Cell(x, y, cell_size, bool(random.getrandbits(1)), offset_x, offset_y)
-                      for y in range(cells_h)]
-                      for x in range(cells_w)]
+        self.cells = [
+            [
+                Cell(x, y, cell_size, bool(random.getrandbits(1)), offset_x, offset_y)
+                for y in range(cells_h)
+            ]
+            for x in range(cells_w)
+        ]
 
         for row in self.cells:
             for cell in row:
                 self.define_neighbors(cell)
-
 
     def define_neighbors(self, cell: Cell):
         x, y = cell.x, cell.y
         for i in range(-1, 2):
             for j in range(-1, 2):
                 # Ignore the current cell
-                if not (i == j == 0) \
-                   and 0 <= x + i < len(self.cells) \
-                   and 0 <= y + j < len(self.cells[0]):
+                if (
+                    not (i == j == 0)
+                    and 0 <= x + i < len(self.cells)
+                    and 0 <= y + j < len(self.cells[0])
+                ):
                     cell.neighbors.append(self.cells[x + i][y + j])
 
-
-    def calculate_neighbors(self, current_thread = 0, total_threads = 1):
+    def calculate_neighbors(self, current_thread=0, total_threads=1):
         start = current_thread * ((len(self.cells) ** 2) // total_threads)
         stop = (current_thread + 1) * ((len(self.cells) ** 2) // total_threads)
- 
+
         for i in range(start, stop):
             self.cells[i // len(self.cells)][i % len(self.cells)].calculate_neighbors()
-
 
     def evolve(self, surface: pygame.Surface):
         for row in self.cells:
@@ -134,22 +139,18 @@ class Grid:
                 cell.evolve()
                 cell.draw(surface)
 
-
     def insert_pattern(self, pattern: Pattern, x: int, y: int):
         for i, row in enumerate(pattern.layout):
             for j, _ in enumerate(row):
                 self.cells[x + j][y + i].alive = pattern.at(i, j)
                 self.cells[x + j][y + i].next_status = pattern.at(i, j)
 
-
     def revive_cell(self, x: int, y: int):
         self.cells[x][y].alive = True
         self.cells[x][y].next_status = True
-
 
     def clear(self):
         for row in self.cells:
             for cell in row:
                 cell.alive = False
                 cell.next_status = False
-
